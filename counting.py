@@ -128,6 +128,20 @@ class Count:
                 if stay:
                     curr_hand.hand_dealt(val)
                     total = curr_hand.hand_value()
+        self.run_dealer()
+        
+
+    #finish this
+    def run_split(self):
+        return 0
+
+    def run_dealer(self):
+        dealer = self.dealer.get_hand()
+        total = dealer.hand_value()
+        while(total < 17):
+            val = input("Next card from dealer: ")
+            self.dealer.hand_dealt(val)
+            total = dealer.hand_value()
 
     def basic_strategy(self, curr_hand, total, upidx):
         print("It\'s your turn now!")
