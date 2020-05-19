@@ -75,12 +75,15 @@ def main(args):
     cc.add_players(player_num)
     cc.place_the_player(player_position)
     cc.run_round()
+    cc.running_count()
+    #This returns the true count.
+    cc.true_count()
 	
 
 class Count:
 
     def __init__(self, deck_num, card_num=0, card_count=0):
-        self.card_count = card_count
+        self.run_count = card_count
         self.card_num = card_num
         self.deck_num = deck_num
         self.dealer = Player()
@@ -91,7 +94,7 @@ class Count:
         self.players.insert(pos, self.the_player)
 
     def add_players(self, num):
-        for p in range(num):
+        for _ in range(num):
             self.players.append(Player())
 
     def remove_player(self, pos):
@@ -100,8 +103,19 @@ class Count:
     def running_count(self):
     	for x in self.players:
     		hand = x.get_hand()
-    		self.card_count += hand.ret_count()
+    		self.run_count += hand.ret_count()
     		self.card_num += hand.num_cards()
+    		self.update_deck()
+    
+
+    def update_deck(self):
+        if self.card_num >= 26:
+            self.card_num -= 26
+            self.deck_num -= .5
+
+    #round to the nearest int
+    def true_count(self):
+        return self.run_count // self.deck_num
 
     def run_round(self):
         for l in range(2):
