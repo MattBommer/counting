@@ -62,7 +62,7 @@ interpretation  = {"H" : "hit", "S" : "stay", "D" : "double down", "Y" : "split 
 #Args: 
 #   0 : The number of decks being used for the shoe (usually 6 or 8), 
 #   1 : The number of players at the table besides yourself
-#   2 : Potentially the pre-existing count but will add later
+#   2 : Position player is at the table
 def main(args):
     try:
         deck_num = int(args[0])
@@ -80,22 +80,22 @@ def main(args):
         #This returns the true count.
         tc = cc.true_count()
         ev = tc * .5
-        print("The true count is: " + tc)
-        print("The expected value is " + ev)
+        print("The true count is: " + str(tc))
+        print("The expected value is " + str(ev))
         if ev > 0:
             print("The player has the advantage!")
         else:
             print("The house has the advantage!")
         bet = (tc - 1)/2
-        print("You should bet " + bet + " units")
+        print("You should bet " + str(bet) + " units")
         cc.reset()
-        l = input("What players (by positions) left?")
+        l = input("What players (by positions) left? ")
         for x in l.split():
             try:
                 cc.remove_player(int(x))
             except ValueError:
                 print("Input is not a number")
-        j = input("What players (by positions) joined?")
+        j = input("What players (by positions) joined? ")
         for x in j.split():
             try:
                 cc.insert_player(int(x))
@@ -147,12 +147,12 @@ class Count:
 
     def run_round(self):
         for l in range(2):
-            for x in self.players:
+            for i,x in enumerate(self.players):
                 val = None
-                if x.is_the_player:
+                if x.is_the_player():
                     val = input("Your card: ").strip().replace(" ","")
                 else:
-                    val = input("Player card: ").strip().replace(" ","")
+                    val = input("Player " + str(i + 1) + " card: ").strip().replace(" ","")
                 x.hand_dealt(val)
             if l < 1:
                 self.dealer.hand_dealt(input("Dealers upcard: ").strip().replace(" ",""))
@@ -162,9 +162,9 @@ class Count:
             total = curr_hand.hand_value()
             stay = True
             skip = True
-            print("Player " + i + " turn.")
+            print("Player " + str(i + 1) + " turn.")
             while (total < 21 and stay):
-                if p.is_the_player:
+                if p.is_the_player():
                     self.basic_strategy(curr_hand, total, upidx)
                 if skip and p.get_hand().is_pair():
                     inp = input("Did the player split? (y for yes, n for no)")
@@ -173,10 +173,10 @@ class Count:
                     else: 
                         skip = False
                 else:
-                    val = input("Next card (use s to indicate the player is staying): ").strip().replace(" ","")
+                    val = input("Next card for player " + str(i + 1)+  " (use s to indicate the player is staying): ").strip().replace(" ","")
                     stay = False if val.lower() == "s" else True
                     if stay:
-                        curr_hand.hand_dealt(val)
+                        p.hand_dealt(val)
                         total = curr_hand.hand_value()
         self.run_dealer()
         
@@ -192,7 +192,7 @@ class Count:
             stay = True
             total = h.hand_value()
             while (total < 21 and stay):
-                val = input("Next card of split " + i + " (use s to indicate the player is staying): ").strip().replace(" ","")
+                val = input("Next card of split " + str(i + 1) + " (use s to indicate the player is staying): ").strip().replace(" ","")
                 stay = False if val.lower() == "s" else True
                 if stay:
                     h.hand_dealt(val)
@@ -209,7 +209,7 @@ class Count:
 
     def basic_strategy(self, curr_hand, total, upidx):
         print("It\'s your turn now!")
-        if curr_hand.is_pair:
+        if curr_hand.is_pair():
             print(interpretation[pair_splitting[curr_hand.get_card(0).get_value() - 2][upidx]])
             #Implement splitting option where player has more than one hand
         elif curr_hand.ace():
@@ -250,15 +250,13 @@ class Player:
 #This class is for the "hands" (or cards received from the dealer) of a player/dealer
 class Hand:
 
-    def __init__(self, cards=[]):
+    def __init__(self):
         self.cards = []
         self.value = 0
         self.has_ace = False
         self.pair = False
         self.hand_count = 0
         self.idx = 0
-        self.add_cards(cards)
-        self.update_hand()
 
     def flush_hand(self):
         self.value = 0
@@ -286,7 +284,7 @@ class Hand:
                 self.value += x.get_value()
                 if not self.has_ace:
                     self.has_ace = x.is_ace()
-            if self.idx < 2:
+            if self.idx < 2 and len(self.cards) == 2:
                 self.pair = self.cards[0].is_pair(self.cards[1])
             self.idx = len(self.cards)
         if self.value > 21 and self.has_ace:
@@ -323,9 +321,9 @@ class Card:
             self.card_val += self.card[val.upper()]
 
         if self.card_val >= 10:
-            self.count_val = 1
-        elif self.card_val <= 6:
             self.count_val = -1
+        elif self.card_val <= 6:
+            self.count_val = 1
         else:
             self.count_val = 0
 
