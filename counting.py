@@ -74,11 +74,35 @@ def main(args):
     cc = Count(deck_num)
     cc.add_players(player_num)
     cc.place_the_player(player_position)
-    cc.run_round()
-    cc.running_count()
-    #This returns the true count.
-    cc.true_count()
-	
+    while True:
+        cc.run_round()
+        cc.running_count()
+        #This returns the true count.
+        tc = cc.true_count()
+        ev = tc * .5
+        print("The true count is: " + tc)
+        print("The expected value is " + ev)
+        if ev > 0:
+            print("The player has the advantage!")
+        else:
+            print("The house has the advantage!")
+        bet = (tc - 1)/2
+        print("You should bet " + bet + " units")
+        cc.reset()
+        l = input("What players (by positions) left?")
+        for x in l.split():
+            try:
+                cc.remove_player(int(x))
+            except ValueError:
+                print("Input is not a number")
+        j = input("What players (by positions) joined?")
+        for x in j.split():
+            try:
+                cc.insert_player(int(x))
+            except ValueError:
+                print("Input is not a number")
+
+
 
 class Count:
 
@@ -97,17 +121,21 @@ class Count:
         for _ in range(num):
             self.players.append(Player())
 
+    def insert_player(self, idx):
+        self.players.insert(idx)
+
     def remove_player(self, pos):
         self.players.pop(pos)
 
     def running_count(self):
-    	for x in self.players:
-    		hand = x.get_hand()
-    		self.run_count += hand.ret_count()
-    		self.card_num += hand.num_cards()
-    		self.update_deck()
+        for x in self.players:
+            hand = x.get_hand()
+            self.run_count += hand.ret_count()
+            self.card_num += hand.num_cards()
+            self.update_deck()
     
 
+	#come back too, I would like it to be so that the deck number is rounded to the nearest half
     def update_deck(self):
         if self.card_num >= 26:
             self.card_num -= 26
@@ -133,21 +161,43 @@ class Count:
             curr_hand = p.get_hand()
             total = curr_hand.hand_value()
             stay = True
+            skip = True
             print("Player " + i + " turn.")
             while (total < 21 and stay):
                 if p.is_the_player:
                     self.basic_strategy(curr_hand, total, upidx)
-                val = input("Next card (use s to indicate the player is staying): ").strip().replace(" ","")
-                stay = False if val.lower() == "s" else True
-                if stay:
-                    curr_hand.hand_dealt(val)
-                    total = curr_hand.hand_value()
+                if skip and p.get_hand().is_pair():
+                    inp = input("Did the player split? (y for yes, n for no)")
+                    if inp == 'y':
+                        stay = self.run_split(p)
+                    else: 
+                        skip = False
+                else:
+                    val = input("Next card (use s to indicate the player is staying): ").strip().replace(" ","")
+                    stay = False if val.lower() == "s" else True
+                    if stay:
+                        curr_hand.hand_dealt(val)
+                        total = curr_hand.hand_value()
         self.run_dealer()
         
 
     #finish this
-    def run_split(self):
-        return 0
+    def run_split(self, player):
+        h1 = player.get_hand()
+        h2 = player.get_hand(True)
+        h2.add_cards(h1.get_card(1).get_card_str())
+        h1.remove_card(1)
+        hands = [h1, h2]
+        for i,h in enumerate(hands):
+            stay = True
+            total = h.hand_value()
+            while (total < 21 and stay):
+                val = input("Next card of split " + i + " (use s to indicate the player is staying): ").strip().replace(" ","")
+                stay = False if val.lower() == "s" else True
+                if stay:
+                    h.hand_dealt(val)
+                    total = h.hand_value()	
+        return False
 
     def run_dealer(self):
         dealer = self.dealer.get_hand()
@@ -172,16 +222,26 @@ class Count:
             else:
                 print(interpretation[hard_totals[total - 8][upidx]])
 
+    def reset(self):
+        for p in self.players:
+            p.flush_player_hand()
+        self.dealer.flush_player_hand()
+
 class Player:
     def __init__ (self, the_player=False):
         self.hand = Hand()
+        self.split = Hand()
         self.the_player = the_player
     
-    def hand_dealt(self, card):
-        self.hand.add_cards(card)
+    def flush_player_hand(self):
+        self.hand = Hand()
+        self.split = Hand()
 
-    def get_hand(self):
-        return self.hand
+    def hand_dealt(self, card, split=False):
+        self.split.add_cards(card) if split else self.hand.add_cards(card) 
+
+    def get_hand(self, split=False):
+        return self.split if split else self.hand
 
     def is_the_player(self):
         return self.the_player
@@ -200,14 +260,25 @@ class Hand:
         self.add_cards(cards)
         self.update_hand()
 
+    def flush_hand(self):
+        self.value = 0
+        self.has_ace = False
+        self.pair = False
+        self.hand_count = 0
+        self.idx = 0
+
     def add_cards(self, card):
         self.cards.append(Card(card))
+        self.update_hand()
+
+    def remove_card(self, num):
+        self.cards.pop(num)
+        self.flush_hand()
         self.update_hand()
 
     def ret_count(self):
         return self.hand_count
 
-    #Case of pair of aces is not taken care of
     def update_hand(self):
         if self.idx < len(self.cards):
             for x in self.cards[self.idx:]:
@@ -270,11 +341,11 @@ class Card:
     def get_value(self):
         return self.card_val
 
-    def get_num(self):
+    def get_card_str(self):
         return self.card_num
 
     def is_pair(self, other_card):
-        return self.card_num == other_card.get_num()
+        return self.card_num == other_card.get_card_str()
         
 
 if __name__ == "__main__":
