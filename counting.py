@@ -195,7 +195,7 @@ class Count:
                 val = input("Next card of split " + str(i + 1) + " (use s to indicate the player is staying): ").strip().replace(" ","")
                 stay = False if val.lower() == "s" else True
                 if stay:
-                    h.hand_dealt(val)
+                    player.hand_dealt(val)
                     total = h.hand_value()	
         return False
 
