@@ -67,19 +67,21 @@ def main(args):
     try:
         deck_num = int(args[0])
         player_num = int(args[1])
-        player_position = int(args[2])
+        player_position = int(args[2]) - 1
     except ValueError:
         print("One or more arguements is not of type int")
         sys.exit()
     cc = Count(deck_num)
     cc.add_players(player_num)
-    cc.place_the_player(player_position)
+    if player_position >= 0:
+        cc.place_the_player(player_position)
     while True:
         cc.run_round()
-        cc.running_count()
+        rc = cc.running_count()
         #This returns the true count.
         tc = cc.true_count()
         ev = tc * .5
+        print("The running count is " + str(rc))
         print("The true count is: " + str(tc))
         print("The expected value is " + str(ev))
         if ev > 0:
@@ -89,19 +91,27 @@ def main(args):
         bet = (tc - 1)/2
         print("You should bet " + str(bet) + " units")
         cc.reset()
-        l = input("What players (by positions) left? ")
+        l = input("What players (by positions separated by spaces) left? ")
         for x in l.split():
             try:
-                cc.remove_player(int(x))
+                cc.remove_player(int(x) - 1)
             except ValueError:
                 print("Input is not a number")
-        j = input("What players (by positions) joined? ")
+        j = input("What players (by positions separated by spaces) joined? ")
         for x in j.split():
             try:
-                cc.insert_player(int(x))
+                cc.insert_player(int(x) - 1)
             except ValueError:
                 print("Input is not a number")
+        if player_position < 0:
+            num = input("What positions did the player choose? ").strip()
+            if num != "":
+                try:
+                    cc.place_the_player(int(num) - 1)
+                except ValueError:
+                    print("Input is not a number")
 
+ 
 
 
 class Count:
@@ -122,7 +132,7 @@ class Count:
             self.players.append(Player())
 
     def insert_player(self, idx):
-        self.players.insert(idx)
+        self.players.insert(idx, Player())
 
     def remove_player(self, pos):
         self.players.pop(pos)
@@ -133,6 +143,7 @@ class Count:
             self.run_count += hand.ret_count()
             self.card_num += hand.num_cards()
             self.update_deck()
+        return self.run_count
     
 
 	#come back too, I would like it to be so that the deck number is rounded to the nearest half
@@ -146,7 +157,7 @@ class Count:
         return self.run_count // self.deck_num
 
     def run_round(self):
-        for l in range(2):
+        for _ in range(2):
             for i,x in enumerate(self.players):
                 val = None
                 if x.is_the_player():
@@ -154,32 +165,36 @@ class Count:
                 else:
                     val = input("Player " + str(i + 1) + " card: ").strip().replace(" ","")
                 x.hand_dealt(val)
-            if l < 1:
-                self.dealer.hand_dealt(input("Dealers upcard: ").strip().replace(" ",""))
-        upidx = self.dealer.get_hand().hand_value() - 2
-        for i,p in enumerate(self.players):
-            curr_hand = p.get_hand()
-            total = curr_hand.hand_value()
-            stay = True
-            skip = True
-            print("Player " + str(i + 1) + " turn.")
-            while (total < 21 and stay):
-                if p.is_the_player():
-                    self.basic_strategy(curr_hand, total, upidx)
-                if skip and p.get_hand().is_pair():
-                    inp = input("Did the player split? (y for yes, n for no)")
-                    if inp == 'y':
-                        stay = self.run_split(p)
-                    else: 
-                        skip = False
-                else:
-                    val = input("Next card for player " + str(i + 1)+  " (use s to indicate the player is staying): ").strip().replace(" ","")
-                    stay = False if val.lower() == "s" else True
-                    if stay:
-                        p.hand_dealt(val)
-                        total = curr_hand.hand_value()
+        deal = input("Dealers upcard: ").strip().replace(" ","")
+        self.dealer.hand_dealt(deal)
+        if (not (self.dealer.get_hand().hand_value() > 9 and self.has_bj())):
+            upidx = self.dealer.get_hand().hand_value() - 2
+            for i,p in enumerate(self.players):
+                curr_hand = p.get_hand()
+                total = curr_hand.hand_value()
+                stay = True
+                skip = True
+                print("Player " + str(i + 1) + " turn.")
+                while (total < 21 and stay):
+                    if p.is_the_player():
+                        self.basic_strategy(curr_hand, total, upidx)
+                    if skip and p.get_hand().is_pair():
+                        inp = input("Did the player split? (y for yes, n for no)")
+                        if inp == 'y':
+                            stay = self.run_split(p)
+                        else: 
+                            skip = False
+                    else:
+                        val = input("Next card for player " + str(i + 1)+  " (use s to indicate the player is staying): ").strip().replace(" ","")
+                        stay = False if val.lower() == "s" else True
+                        if stay:
+                            p.hand_dealt(val)
+                            total = curr_hand.hand_value()
         self.run_dealer()
         
+    def has_bj(self):
+        val = input("Does dealer have BlackJack? (y or n) ")
+        return True if val.lower() == 'y' else False 
 
     #finish this
     def run_split(self, player):
@@ -289,8 +304,9 @@ class Hand:
             self.idx = len(self.cards)
         if self.value > 21 and self.has_ace:
             for x in self.cards:
-                if x.is_ace and x.get_value != 1:
+                if x.is_ace() and x.get_value() != 1:
                     x.set_ace()
+                    self.value -= 10
                     break
 
     def get_card(self, idx):
