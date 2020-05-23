@@ -150,7 +150,7 @@ class Count:
         curr_deck_cnt = temp // 26
         rounding_fctr = temp % 26
         curr_deck_cnt += .5 if rounding_fctr < 13 else 0
-        return self.running_count / curr_deck_cnt
+        return self.run_count / curr_deck_cnt
 
     def run_round(self):
         for _ in range(2):
