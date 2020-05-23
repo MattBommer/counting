@@ -142,19 +142,15 @@ class Count:
             hand = x.get_hand()
             self.run_count += hand.ret_count()
             self.card_num += hand.num_cards()
-            self.update_deck()
         return self.run_count
     
-
-	#come back too, I would like it to be so that the deck number is rounded to the nearest half
-    def update_deck(self):
-        if self.card_num >= 26:
-            self.card_num -= 26
-            self.deck_num -= .5
-
     #round to the nearest int
     def true_count(self):
-        return self.run_count // self.deck_num
+        temp = (self.deck_num * 52) - self.card_num
+        curr_deck_cnt = temp // 26
+        rounding_fctr = temp % 26
+        curr_deck_cnt += .5 if rounding_fctr < 13 else 0
+        return self.running_count / curr_deck_cnt
 
     def run_round(self):
         for _ in range(2):
