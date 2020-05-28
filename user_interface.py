@@ -48,7 +48,7 @@ class HomePage(tk.Frame):
         
         #Writing cursor defaults to the only text box available and we bind enter key to running the program
         deck_entry.focus()
-        self.bind("<Return>", lambda: self.init_count(num_deck.get(), error_message))
+        parent_obj.bind('<Return>', lambda event: self.init_count(num_deck.get(), error_message))
         
 
     def init_count(self, decks, error_reply):
