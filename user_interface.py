@@ -1,45 +1,87 @@
-from tkinter import *
-from tkinter import ttk
+import tkinter as tk
 import counting as ct
+from tkinter import StringVar
 
-def start(*args):
-    try:
-        deck = int(deck_num.get())
-        players = int(num_players.get())
-        prg_args = [deck, players, 0]
-        error_message.set("")
-        frame = Toplevel(root).grid(column=0, row=0, sticky=(N, W, E, S))
-        frame.tkraise()
-    except ValueError:
-        error_message.set("One or more of the arguments given wasn't a number, try again...")
+def main():
+    card_counter = DegeneracyLite()
+    card_counter.mainloop()
 
-root = Tk()
-root.title("Degeneracy Lite")
+class DegeneracyLite (tk.Tk):
+    def __init__(self):
+        super(DegeneracyLite, self).__init__()
+        self.pages = []
+        mainframe = tk.Frame(self)
+        mainframe.pack(fill="both", expand=True)
+        mainframe.columnconfigure(0, weight=1)
+        mainframe.rowconfigure(0, weight=1)
+        for page in [HomePage, GamePage]:
+            p_obj = page(mainframe, self)
+            p_obj.grid(row=0,column=0,sticky="nwes")
+            self.pages.append(p_obj)
+        self.raise_page(0)
 
-# mainframe = ttk.Frame(root, padding="20 20 20 20", width=400, height=1300)
-# mainframe.grid(row=0, column=0, sticky=(N, W, E, S))
-# root.columnconfigure(0, weight=1)
-# root.rowconfigure(0, weight=1)
+    def raise_page(self, idx):
+        self.pages[idx].tkraise()
 
-# deck_num = StringVar()
-# num_players = StringVar()
-# error_message = StringVar()
+class HomePage(tk.Frame):
+    
+    def __init__(self, parent_frame, parent_obj):
+        super(HomePage, self).__init__(parent_frame)
+        self.parent = parent_obj
 
-# ttk.Label(mainframe, text="Number of decks left in the shoe?").grid(column=7,row=1,sticky=W)
-# deck_entry = ttk.Entry(mainframe, textvariable=deck_num)
-# deck_entry.grid(column=7, row=2, sticky=W)
+        tk.Label(self, text="Welcome to the DegeneracyLite Blackjack card counter!").pack(fill="both", padx=5, pady=5)
+        
+        num_deck = StringVar()
+        error_message = StringVar()
 
-# ttk.Label(mainframe, text="Number of players at the table?").grid(column=7,row=3,sticky=W)
-# player_entry = ttk.Entry(mainframe, textvariable=num_players)
-# player_entry.grid(column=7, row=4, sticky=W)
+        #Label for number of decks left in shoe
+        tk.Label(self, text="Number of decks left in the shoe? (Enter a number)").pack()
+        deck_entry = tk.Entry(self, width=3, textvariable=num_deck)
+        deck_entry.pack()
+        
+        #Error label if the user inputs a value that isn't a number
+        tk.Label(self, textvariable=error_message).pack(side="bottom", fill="both")
 
-# error_label = ttk.Label(mainframe, textvariable=error_message).grid(column=7, row=10, sticky=W)
+        #Button to run the program
+        button = tk.Button(self, text="Start", command=lambda: self.init_count(num_deck.get(), error_message))
+        button.pack()
+        
+        #Writing cursor defaults to the only text box available and we bind enter key to running the program
+        deck_entry.focus()
+        self.bind("<Return>", lambda: self.init_count(num_deck.get(), error_message))
+        
 
-# ttk.Button(mainframe, text="Start Counting", command=start).grid(column=20, row=20, sticky=E)
+    def init_count(self, decks, error_reply):
+        try:
+            dnum = int(decks)
+            error_reply.set("")
+        except:
+            error_reply.set("The entry " + str(decks) + " is not an integer or in int form, try again...")
+        else:
+            #Run count.py
+            self.parent.raise_page(1)
+            
 
-# for child in mainframe.winfo_children(): child.grid_configure(padx=10, pady=10)
+class GamePage(tk.Frame):
 
-# deck_entry.focus()
-# root.bind('<Return>', start)
+    def __init__(self, parent_frame, parent_obj):
+        super(GamePage, self).__init__(parent_frame)
+        self.parent = parent_obj
+        
+        #Random page label for the time being
+        tk.Label(self, text="This is the GamePage").pack()
+        
+        #Button for reseting the program (used when the cards are shuffled and a new shoe is in play)
+        tk.Button(self, text="Reset", command=self.reset_count).pack()
+        tk.Button(self, text="Calculate Count", command=self.run_count).pack()
 
-root.mainloop()
+    def reset_count(self):
+        self.parent.raise_page(0)
+
+    def run_count(self):
+        #run a round of count
+        print("running a round of count")
+        pass
+        
+if __name__ == "__main__":
+    main()
