@@ -1,7 +1,6 @@
 import tkinter as tk
 import counting as ct
 from tkinter import StringVar
-from tkinter import PhotoImage
 
 def main():
     card_counter = DegeneracyLite()
@@ -70,6 +69,8 @@ class HomePage(tk.Frame):
             error_reply.set("The entry " + str(decks) + " is not an integer or in int form, try again...")
         else:
             self.parent.backend_obj(ct.main(dnum))
+            self.parent.geometry("612x362")
+            self.parent.resizable(height=False, width=False)
             self.parent.raise_page(1)
             
 
@@ -81,25 +82,58 @@ class GamePage(tk.Frame):
         self.count_obj = None
         
         #Random page label for the time being
-        tk.Label(self, text="This is the GamePage").pack()
+        background = tk.PhotoImage(file="table.png")
+        bg_label = tk.Label(self, image=background)
+        bg_label.image = background
+        bg_label.place(x=0, y=0, relwidth=1, relheight=1)
+
         
         #Button for reseting the program (used when the cards are shuffled and a new shoe is in play)
-        button = tk.Button(self, text="Add Player", command=lambda: self.new_player(1))
-        img = PhotoImage(file="C:/Users/Matt/Documents/projects/counting/pictures/plusbutton.png")
-        button.config(image=img)
-        button.pack()
+        img = tk.PhotoImage(file="plusbutton.png")
+        
+          
+        button7 = tk.Button(self, image=img, borderwidth=0, highlightthickness=0, command=lambda: self.new_player(7))
+        button7.image = img
+        button7.place(relx=.0735, rely=.3)
 
-        tk.Button(self, text="Remove Player", command=lambda: self.remove_player(1)).pack(side="bottom", fill="both", padx=5, pady=5)
-        tk.Button(self, text="Reset", command=self.reset_count).pack()
-        tk.Button(self, text="Calculate Count", command=self.run_count).pack()
+        button6 = tk.Button(self, image=img, borderwidth=0, highlightthickness=0, command=lambda: self.new_player(6))
+        button6.image = img
+        button6.place(relx=.175, rely=.493)
+
+        button5 = tk.Button(self, image=img, borderwidth=0, highlightthickness=0, command=lambda: self.new_player(5))
+        button5.image = img
+        button5.place(relx=.311, rely=.63)
+
+        button4 = tk.Button(self, image=img, borderwidth=0, highlightthickness=0, command=lambda: self.new_player(4))
+        button4.image = img
+        button4.place(relx=.475, rely=.67)
+
+        button3 = tk.Button(self, image=img, borderwidth=0, highlightthickness=0, command=lambda: self.new_player(3))
+        button3.image = img
+        button3.place(relx=.639, rely=.63)
+
+        button2 = tk.Button(self, image=img, borderwidth=0, highlightthickness=0, command=lambda: self.new_player(2))
+        button2.image = img
+        button2.place(relx=.775, rely=.493)
+
+        button1 = tk.Button(self, image=img, borderwidth=0, highlightthickness=0, command=lambda: self.new_player(1))
+        button1.image = img
+        button1.place(relx=.8765, rely=.3)
+
+        # tk.Button(self, text="Remove Player", command=lambda: self.remove_player(1)).pack(side="bottom", fill="both", padx=5, pady=5)
+        tk.Button(self, text="Reset", command=self.reset_count).place(relx=0.0, rely=.925)
+        tk.Button(self, text="Calculate Count", command=self.run_count).place(relx=.845, rely=.925)
 
     def new_player(self, location):
         self.count_obj.add_player(location)
 
     def remove_player(self, location):
+
+
         self.count_obj.remove_player(location)
 
     def reset_count(self):
+        self.parent.geometry("")
         self.parent.raise_page(0)
 
     def set_backend (self, obj):
